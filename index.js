@@ -12,8 +12,8 @@ let rows = [];
  * 
  */
 function setKey(k) {
-    if(k.length < asciiStart) key = k
-    else console.warn("key legnth must not exceed 33")
+    if(k.length <= 5) key = k
+    else console.warn("key legnth must not exceed 5")
 }
 
 /**
@@ -108,10 +108,10 @@ function asciiDecrypt(text){
         let n = text.charCodeAt(0);
     
         for(let i = 0; i < key.length; i++){
-        n--
-        for(let v of skipCode){
+         n--
+         for(let v of skipCode){
             if(v == n) n--
-        }
+         }
         }
         
         if(n == 32){
@@ -184,7 +184,7 @@ function decrypt(text) {
     }
 }
 
-setKey("ME")
+setKey("MEWHO")
 
 const msg = [
     "helloWorld123#@$% ",
