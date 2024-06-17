@@ -22,21 +22,27 @@ function setKey(k) {
  * @returns {string, null}
  */
 function asciiEncrypt(text){
-    let n = text.charCodeAt(0);
+    try{
+        let n = text.charCodeAt(0);
     
-    for(let i = 0; i < key.length; i++){
-      n++ 
-      for(let v of skipCode)
-        if(v == n) n++
+        for(let i = 0; i < key.length; i++){
+          n++ 
+          for(let v of skipCode)
+            if(v == n) n++
+        }
+    
+        if(n > asciiEnd){
+         n = (n - asciiEnd) + asciiStart
+         for(let v of skipCode)
+           if(v == n) n++
+        }
+       
+        return String.fromCharCode(n)
+    }catch(e){
+        console.error("Error expected from asciiEncrypt(text) --> ", text, "  topic: { encryption }" )
+        console.log(e)
     }
 
-    if(n > asciiEnd){
-     n = (n - asciiEnd) + asciiStart
-     for(let v of skipCode)
-       if(v == n) n++
-    }
-   
-    return String.fromCharCode(n)
 }
 
 /**
@@ -63,23 +69,29 @@ function cb(ev, txt) {
  * @returns {string}
  */
 function encrypt(text) {
-    rows = []
-    text = text.replace(/\s|\t"/g, "")
-    let idx = 0;
- 
-    for (let i = 0; i < text.length; i++) {
-        let keyIndex = i % key.length;
-        if (keyIndex == 0) rows.push([])
-        if (rows[idx]?.length == key.length) idx++
-        rows[idx]?.push(text[i])  
-    }
-    if(rows[idx]?.length != key.length){
-        for(let j = rows[idx]?.length; j < key.length; j++){
-            rows[idx]?.push("X")
+    try{
+        rows = []
+        text = text.replace(/\s|\t"/g, "")
+        let idx = 0;
+     
+        for (let i = 0; i < text.length; i++) {
+            let keyIndex = i % key.length;
+            if (keyIndex == 0) rows.push([])
+            if (rows[idx]?.length == key.length) idx++
+            rows[idx]?.push(text[i])  
         }
+        if(rows[idx]?.length != key.length){
+            for(let j = rows[idx]?.length; j < key.length; j++){
+                rows[idx]?.push("X")
+            }
+        }
+    
+       return cb(1, cb(0, ""))
+    }catch(e){
+        console.error("Error expected from encrypt(text) --> ", text, "  topic: { encryption }" )
+        console.log(e)
     }
 
-   return cb(1, cb(0, ""))
 }
 
 
@@ -92,28 +104,31 @@ function encrypt(text) {
  * @returns {string, null}
  */
 function asciiDecrypt(text){
+    try{
+        let n = text.charCodeAt(0);
     
-    let n = text.charCodeAt(0);
-   
-    for(let i = 0; i < key.length; i++){
-     n--
-     for(let v of skipCode){
+        for(let i = 0; i < key.length; i++){
+        n--
+        for(let v of skipCode){
+            if(v == n) n--
+        }
+        }
+        
+        if(n == 32){
+        n = asciiEnd
+        }else if(n < asciiStart)
+        {
+        n =  asciiEnd - (asciiStart - n) + 1
+        for(let v of skipCode)
         if(v == n) n--
-     }
-    }
+        
+        }
     
-    if(n == 32){
-     n = asciiEnd
-    }else if(n < asciiStart)
-    {
-     n =  asciiEnd - (asciiStart - n) + 1
-     for(let v of skipCode)
-      if(v == n) n--
-     
+        return String.fromCharCode(n)
+    }catch(e){
+        console.error("Error expected from asciiDecrypt(text) --> ", text, "  topic: { decryption }" )
+        console.log(e)
     }
-   
-    return String.fromCharCode(n)
-
 }
 
 
@@ -139,29 +154,34 @@ function cb1(ev, txt) {
  * @returns {string}
  */
 function decrypt(text) {
-    rows = []
-   
-    const eKey = cb1(1, cb1(0, ""))
-    let decrypt = ""
-
-    const divide = text.length / key.length
-    const regex = new RegExp(`.{1,${divide}}`,'g')
-    const chunks = text.match(regex);
-
-    for (let i = 0; i < key.length; i++){
-        let temp = typeof eKey == "string" ? eKey.split("") : []
-        let dText = chunks[temp.indexOf(key[i])].split("")
-        rows.push(dText)
-    }
+    try{
+        rows = []
     
-    for (let k = 0; k < divide; k++){
-        for (let j = 0; j < rows.length; j++){
-           
-            decrypt += asciiDecrypt(rows[j][k])
+        const eKey = cb1(1, cb1(0, ""))
+        let decrypt = ""
+
+        const divide = text.length / key.length
+        const regex = new RegExp(`.{1,${divide}}`,'g')
+        const chunks = text.match(regex);
+
+        for (let i = 0; i < key.length; i++){
+            let temp = typeof eKey == "string" ? eKey.split("") : []
+            let dText = chunks[temp.indexOf(key[i])].split("")
+            rows.push(dText)
         }
+        
+        for (let k = 0; k < divide; k++){
+            for (let j = 0; j < rows.length; j++){
+            
+                decrypt += asciiDecrypt(rows[j][k])
+            }
+        }
+    
+        return decrypt
+    }catch(e){
+        console.error("Error expected from decrypt(text) --> ", text, "  topic: { decryption }" )
+        console.log(e)
     }
-   
-    return decrypt
 }
 
 setKey("ME")
@@ -169,8 +189,8 @@ setKey("ME")
 const msg = [
     "helloWorld123#@$% ",
     "MyOwnCypher435235_hello  loRem1psum   space nih"
+    // add your unbreakable text here
 ]
-
 
 for(let m of msg){
     console.log("**************************************************************************")
